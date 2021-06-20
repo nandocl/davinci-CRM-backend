@@ -4,4 +4,5 @@ export interface IClient{
     phone: string;
     address: string;
     campCode: string;
+    id?: string
 }
