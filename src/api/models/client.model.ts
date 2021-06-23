@@ -27,26 +27,25 @@ export class ClientModel{
     }
   }
   
-  static async saveClients(clientes: IClient[]){
+  static async saveClients(clientes: any[]){
     let connection = await oracledb.getConnection();
-    let elements = 0;
     try{
       const lastCode = await connection.execute('SELECT codigo FROM campanias WHERE id = (SELECT MAX(id) FROM campanias)');
       let campCode = JSON.parse(JSON.stringify(lastCode.rows))[0][0];
-      for(const e of clientes){
-        const sql = `INSERT INTO clientes VALUES (:id,:name,:lastname,:phone,:address,:code)`;
-        const binds = {'id': null, 'name': e.name, 'lastname': e.lastName, 'phone': e.phone, 'address': e.address, 'code': campCode};
-        const options = {
-          autoCommit: true,
-          bindDefs: [
-            { type: oracledb.NUMBER },
-            { type: oracledb.STRING, maxSize: 20 }
-          ]
-        };
-        const result = await connection.execute(sql, binds, options);
-        elements += result.rowsAffected? 1: 0;
-      }
-      return elements;
+      const sql = `INSERT INTO clientes VALUES (:1,:2,:3,:4,:5,:6)`;
+      const options = {
+        autoCommit: true,
+        bindDefs: [
+          { type: oracledb.NUMBER },
+          { type: oracledb.STRING, maxSize: 20 },
+          { type: oracledb.STRING, maxSize: 20 },
+          { type: oracledb.STRING, maxSize: 20 },
+          { type: oracledb.STRING, maxSize: 20 },
+          { type: oracledb.STRING, maxSize: 20 },
+        ]
+      };
+      const result = await connection.executeMany(sql, clientes, options);
+      return result.rowsAffected;
     }catch(e){
       return -1;
     }finally{
@@ -64,7 +63,7 @@ export class ClientModel{
     let connection = await oracledb.getConnection();
     try{
       const query = `UPDATE clientes SET names=:names, lastnames=:lastnames, phone=:phone, address=:address WHERE id=:id`;
-      const binds = {id:client.id,names:client.name,lastnames:client.lastName,phone:client.phone,address:client.address};
+      const binds = {id:client.id,names:client.name,lastnames:client.lastname,phone:client.phone,address:client.address};
       const options = {
         autoCommit: true,
       };
@@ -105,6 +104,24 @@ export class ClientModel{
       }
     }
 
+  }
+
+  static async getLastCode(){
+    let connection = await oracledb.getConnection();
+    try{
+      const lastCode = await connection.execute('SELECT codigo FROM campanias WHERE id = (SELECT MAX(id) FROM campanias)');
+      return JSON.parse(JSON.stringify(lastCode.rows))[0][0];
+    } catch(err){
+      return null;
+    }finally{
+      if (connection) {
+        try {
+          await connection.close();
+        } catch (err) {
+          console.log(err);
+        }
+      }
+    }
   }
 
 }

@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
-import { upload } from '../utils/multer';
 import lineReader from 'line-reader';
 
 //Models
 import { ClientModel } from '../models/client.model';
-import { IClient } from '../../interfaces/IClient';
+import { Multer } from '../utils/multer';
 
 export class ClientController{
     static get = async (req: Request, res: Response) => {
@@ -13,22 +12,22 @@ export class ClientController{
     }
 
     static post = (req: Request, res: Response) => {
-        upload(req,res, async function(err: any) {
-            // console.log('posttt' + req.body)
+        Multer.upload(req,res, async function(err: any) {
             let [nombrePos, apellidoPos, telefonoPos, direccionPos, caracterPos] = JSON.parse(req.body.pos);
-            let clientsArray: IClient[] = [];
+            let clientsArray: string[][] = [];
+            let campCode = await ClientModel.getLastCode();
             lineReader.eachLine(req.file.path, async (line, last) => {
                 let lineArray = line.split(caracterPos);
-                if(lineArray.length > 3){
+                if(lineArray.length >= 4){
                     let name = lineArray[nombrePos - 1];
-                    let lastName = lineArray[apellidoPos - 1];
+                    let lastname = lineArray[apellidoPos - 1];
                     let phone = lineArray[telefonoPos - 1];
                     let address = lineArray[direccionPos - 1];
-                    let campCode = '';
-                    let client: IClient = {name,lastName,phone,address,campCode}
+                    let client: string[] = [null,name,lastname,phone,address,campCode]
                     clientsArray.push(client);
                     if(last){
                         const endRes = await ClientModel.saveClients(clientsArray);
+                        Multer.deleteFile(req.file.path);
                         if(endRes == undefined) return res.status(500).send();
                         else if(endRes > 0) return res.status(200).send({msg: 'loaded'});
                         else res.status(404).send();
@@ -50,5 +49,9 @@ export class ClientController{
         if(endRes == undefined) return res.status(500).send();
         else if(endRes > 0) return res.status(200).send({id: req.params.clientId});
         else res.status(404).send();
+    }
+
+    static deleteFile(filePath: string){
+
     }
 }
