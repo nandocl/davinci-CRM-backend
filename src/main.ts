@@ -1,19 +1,19 @@
 import express from 'express';
 import { json } from 'body-parser';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import {initialize} from './database/database';
-// if(!process.env.LE) dotenv.config();
+// import dotenv from 'dotenv';
+// dotenv.config();
 
 // Import files
+import { dataBase } from './database/database';
 import mainRoutes from './api/routes';
 
-// Start database
-initialize();
-
-// Const
+// Configs
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Start database
+dataBase.startDb();
 
 // app use
 app.use(json());

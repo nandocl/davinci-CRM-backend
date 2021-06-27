@@ -9,7 +9,7 @@ import { ClientController } from '../controllers/clientes.controller';
 router.route('/')
 .get(ClientController.get)
 .post(ClientController.post)
-.put(ClientController.put)
+// .put(ClientController.put)
 
 router.route('/:clientId')
 .delete(ClientController.delete)
